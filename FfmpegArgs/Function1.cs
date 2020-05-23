@@ -324,10 +324,6 @@ namespace FfmpegArgs
                 settings.storageAccountName = config["storageAccountName"];
                 settings.sasToken = config["sasToken"];
                 settings.ServiceBusConnectionString = config["ServiceBusConnectionString"];
-                if (!String.IsNullOrEmpty(config["blobContainerName"]))
-                {
-                    settings.blobContainerName = config["blobContainerName"];
-                }
             }
             catch (Exception ex)
             {
@@ -340,7 +336,6 @@ namespace FfmpegArgs
         public string outputPath { get; set; }
         public string outputStorageAccountConnStr { get; set; }
         public string storageAccountName { get; set; }
-        public string blobContainerName { get; set; }
         public string sasToken { get; set; }
         public string ServiceBusConnectionString { get; set; }
     }
