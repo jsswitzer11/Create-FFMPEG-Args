@@ -28,18 +28,19 @@ namespace FfmpegArgs
         private static string Season;
         private static string SeasonType;
         private static string Week;
+        private static string xmlName;
         static IQueueClient queueClient;
 
         [FunctionName("FFmpegArgParser")]
-        public static IActionResult Run(
+        public static async Task<IActionResult> RunAsync(
             [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
             ILogger log, ExecutionContext context)
         {
             try
             {
+                xmlName = await req.ReadAsStringAsync();
                 GetSettings(context, log);
                 GetVideoBlobAsync();
-                //GetVideoBlobAsync("rawvideos");
                 GetPlayMetadataAsync(log);
                 return (ActionResult)new OkObjectResult("Complete");
             }
@@ -54,7 +55,7 @@ namespace FfmpegArgs
             try
             {
 
-                string rawXML = await GetXMLBlob("xmlscript");
+                string rawXML = GetXMLBlob("xmlscript", xmlName);
                 byte[] encodedString = Encoding.UTF8.GetBytes(rawXML);
 
                 MemoryStream ms = new MemoryStream(encodedString);
@@ -188,7 +189,7 @@ namespace FfmpegArgs
                     if (pa.Contains("CoachOffense"))
                     {
                         queueClient = new QueueClient(settings.ServiceBusConnectionString, "defense");
-                        string offMessageBody = $"-i {oVidName} " + pa.Substring(pa.LastIndexOf("-- ") + 3);
+                        string offMessageBody = $"-i {dVidName} " + pa.Substring(pa.LastIndexOf("-- ") + 3);
                         var offMessage = new Message(Encoding.UTF8.GetBytes(offMessageBody));
 
                         await queueClient.SendAsync(offMessage);
@@ -198,7 +199,7 @@ namespace FfmpegArgs
                     else if (pa.Contains("CoachDefense"))
                     {
                         queueClient = new QueueClient(settings.ServiceBusConnectionString, "offense");
-                        string defMessageBody = $"-i {dVidName} " + pa.Substring(pa.LastIndexOf("-- ") + 3);
+                        string defMessageBody = $"-i {oVidName} " + pa.Substring(pa.LastIndexOf("-- ") + 3);
                         var defMessage = new Message(Encoding.UTF8.GetBytes(defMessageBody));
 
                         await queueClient.SendAsync(defMessage);
@@ -230,7 +231,7 @@ namespace FfmpegArgs
         public static async void GetVideoBlobAsync()
         {
 
-            string rawXML = await GetXMLBlob("xmlscript");
+            string rawXML = GetXMLBlob("xmlscript", xmlName);
             byte[] encodedString = Encoding.UTF8.GetBytes(rawXML);
 
             MemoryStream memStream = new MemoryStream(encodedString);
@@ -278,7 +279,7 @@ namespace FfmpegArgs
             }
         }
 
-        public static async Task<string> GetXMLBlob(string inputContainerName)
+        public static string GetXMLBlob(string inputContainerName, string xmlname)
         {
             CloudStorageAccount storageAccount = CloudStorageAccount.Parse(settings.outputStorageAccountConnStr);
             // Connect to the blob storage
@@ -286,14 +287,10 @@ namespace FfmpegArgs
             // Connect to the input
             CloudBlobContainer inputContainer = serviceClient.GetContainerReference($"{inputContainerName}");
             // Connect to the blob file
-            var blobItem = await inputContainer.ListBlobsSegmentedAsync(null);
-            foreach (var item in blobItem.Results)
-            {
-                var blob = (CloudBlockBlob)item;
-                string contents = blob.DownloadTextAsync().Result;
-                return contents;
-            }
-            return null;
+            var blobItem = inputContainer.GetBlockBlobReference(xmlname);
+
+            string contents = blobItem.DownloadTextAsync().Result;
+            return contents;
         }
 
         static void GetSettings(ExecutionContext context, ILogger log)
