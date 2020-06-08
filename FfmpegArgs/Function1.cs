@@ -28,6 +28,7 @@ namespace FfmpegArgs
         private static string Season;
         private static string SeasonType;
         private static string Week;
+        private static string GameKey;
         private static string xmlName;
         static IQueueClient queueClient;
 
@@ -56,6 +57,7 @@ namespace FfmpegArgs
             {
 
                 string rawXML = GetXMLBlob("xmlscript", xmlName);
+                //string rawXML = GetXMLBlob("xmlscript", "G57905_Vikings_vs_Falcons_v2.xml");
                 byte[] encodedString = Encoding.UTF8.GetBytes(rawXML);
 
                 MemoryStream ms = new MemoryStream(encodedString);
@@ -153,10 +155,13 @@ namespace FfmpegArgs
                                             p.markInFrame = play.Attributes.GetNamedItem("MarkInFrame").Value;
                                             p.markoutFrame = play.Attributes.GetNamedItem("MarkOutFrame").Value;
 
-                                            string ffmpeg_file = Path.Combine(settings.outputPath, p.outputName);
-                                            string id = play.Attributes.GetNamedItem("ID").Value;
-                                            string arg = $"-ss {p.startTime.ToString()} -t {p.duration.ToString()} {ffmpeg_file}";
-                                            playArgs.Add(id + " -- " + arg);
+                                            if (!p.outputName.Contains("Scoreboard"))
+                                            {
+                                                string ffmpeg_file = Path.Combine(settings.outputPath, p.outputName);
+                                                string id = play.Attributes.GetNamedItem("ID").Value;
+                                                string arg = $"-ss {p.startTime.ToString()} -t {p.duration.ToString()} {ffmpeg_file}";
+                                                playArgs.Add(id + " -- " + arg);
+                                            }
 
                                             if (play.Attributes.GetNamedItem("ID").Value == offense)
                                             {
@@ -186,31 +191,97 @@ namespace FfmpegArgs
 
                 foreach (string pa in playArgs)
                 {
-                    if (pa.Contains("CoachOffense"))
+                    if (pa.Contains("CoachOffense") && pa.Contains("Sideline"))
                     {
-                        queueClient = new QueueClient(settings.ServiceBusConnectionString, "defense");
-                        string offMessageBody = $"-i {dVidName} " + pa.Substring(pa.LastIndexOf("-- ") + 3);
-                        var offMessage = new Message(Encoding.UTF8.GetBytes(offMessageBody));
+                        messageBody defSideline = new messageBody();
+                        queueClient = new QueueClient(settings.ServiceBusConnectionString, "defense_sideline");
+                        string defSidelineMessageBody = $"-i {dVidName} " + pa.Substring(pa.LastIndexOf("-- ") + 3);
 
-                        await queueClient.SendAsync(offMessage);
+                        defSideline.season = Season;
+                        defSideline.seasontype = SeasonType;
+                        defSideline.week = Week;
+                        defSideline.gamekey = GameKey;
+                        defSideline.ffmpegCmd = defSidelineMessageBody;
+                        string defSidelineJSON = JsonConvert.SerializeObject(defSideline);
+
+                        var defSidelineMessage = new Message(Encoding.UTF8.GetBytes(defSidelineJSON));
+
+                        await queueClient.SendAsync(defSidelineMessage);
 
                         await queueClient.CloseAsync();
                     }
-                    else if (pa.Contains("CoachDefense"))
+                    else if (pa.Contains("CoachOffense") && pa.Contains("Endzone"))
                     {
-                        queueClient = new QueueClient(settings.ServiceBusConnectionString, "offense");
-                        string defMessageBody = $"-i {oVidName} " + pa.Substring(pa.LastIndexOf("-- ") + 3);
-                        var defMessage = new Message(Encoding.UTF8.GetBytes(defMessageBody));
+                        messageBody defEndzone = new messageBody();
+                        queueClient = new QueueClient(settings.ServiceBusConnectionString, "defense_endzone");
+                        string defEndzoneMessageBody = $"-i {dVidName} " + pa.Substring(pa.LastIndexOf("-- ") + 3);
 
-                        await queueClient.SendAsync(defMessage);
+                        defEndzone.season = Season;
+                        defEndzone.seasontype = SeasonType;
+                        defEndzone.week = Week;
+                        defEndzone.gamekey = GameKey;
+                        defEndzone.ffmpegCmd = defEndzoneMessageBody;
+                        string defEndzoneJSON = JsonConvert.SerializeObject(defEndzone);
+
+                        var defEndzoneMessage = new Message(Encoding.UTF8.GetBytes(defEndzoneJSON));
+
+                        await queueClient.SendAsync(defEndzoneMessage);
+
+                        await queueClient.CloseAsync();
+                    }
+                    else if (pa.Contains("CoachDefense") && pa.Contains("Sideline"))
+                    {
+                        messageBody offSideline = new messageBody();
+                        queueClient = new QueueClient(settings.ServiceBusConnectionString, "offense_sideline");
+                        string offSidelineMessageBody = $"-i {oVidName} " + pa.Substring(pa.LastIndexOf("-- ") + 3);
+
+                        offSideline.season = Season;
+                        offSideline.seasontype = SeasonType;
+                        offSideline.week = Week;
+                        offSideline.gamekey = GameKey;
+                        offSideline.ffmpegCmd = offSidelineMessageBody;
+                        string defSidelineJSON = JsonConvert.SerializeObject(offSideline);
+
+                        var offSidelineMessage = new Message(Encoding.UTF8.GetBytes(defSidelineJSON));
+
+                        await queueClient.SendAsync(offSidelineMessage);
+                        
+
+                        await queueClient.CloseAsync();
+                    }
+                    else if (pa.Contains("CoachDefense") && pa.Contains("Endzone"))
+                    {
+                        messageBody offEndzone = new messageBody();
+                        queueClient = new QueueClient(settings.ServiceBusConnectionString, "offense_endzone");
+                        string offEndzoneMessageBody = $"-i {oVidName} " + pa.Substring(pa.LastIndexOf("-- ") + 3);
+
+                        offEndzone.season = Season;
+                        offEndzone.seasontype = SeasonType;
+                        offEndzone.week = Week;
+                        offEndzone.gamekey = GameKey;
+                        offEndzone.ffmpegCmd = offEndzoneMessageBody;
+                        string defSidelineJSON = JsonConvert.SerializeObject(offEndzone);
+
+                        var offEndzoneMessage = new Message(Encoding.UTF8.GetBytes(defSidelineJSON));
+
+                        await queueClient.SendAsync(offEndzoneMessage);
 
                         await queueClient.CloseAsync();
                     }
                     else if (pa.Contains("CoachKicks"))
                     {
+                        messageBody specialTeams = new messageBody();
                         queueClient = new QueueClient(settings.ServiceBusConnectionString, "specialteams");
                         string kickMessageBody = $"-i {kVidName} " + pa.Substring(pa.LastIndexOf("-- ") + 3);
-                        var kickMessage = new Message(Encoding.UTF8.GetBytes(kickMessageBody));
+
+                        specialTeams.season = Season;
+                        specialTeams.seasontype = SeasonType;
+                        specialTeams.week = Week;
+                        specialTeams.gamekey = GameKey;
+                        specialTeams.ffmpegCmd = kickMessageBody;
+                        string defSidelineJSON = JsonConvert.SerializeObject(specialTeams);
+
+                        var kickMessage = new Message(Encoding.UTF8.GetBytes(defSidelineJSON));
 
                         await queueClient.SendAsync(kickMessage);
 
@@ -232,6 +303,7 @@ namespace FfmpegArgs
         {
 
             string rawXML = GetXMLBlob("xmlscript", xmlName);
+            //string rawXML = GetXMLBlob("xmlscript", "G57905_Vikings_vs_Falcons_v2.xml");
             byte[] encodedString = Encoding.UTF8.GetBytes(rawXML);
 
             MemoryStream memStream = new MemoryStream(encodedString);
@@ -246,6 +318,7 @@ namespace FfmpegArgs
                     Season = node.Attributes.GetNamedItem("Season").Value.ToString();
                     SeasonType = node.Attributes.GetNamedItem("SeasonType").Value;
                     Week = node.Attributes.GetNamedItem("Week").Value.ToString();
+                    GameKey = node.Attributes.GetNamedItem("Gamekey").Value.ToString();
                 }
             }
 
@@ -254,6 +327,8 @@ namespace FfmpegArgs
             var serviceClient = storageAccount.CreateCloudBlobClient();
 
             CloudBlobContainer inputContainer = serviceClient.GetContainerReference($"{Season}");
+
+            //Change this directory to {SeasonType}/{Week}/{GameKey}/raw/
             CloudBlobDirectory inputDirectory = inputContainer.GetDirectoryReference($"{SeasonType}/{Week}/raw/");
 
             var blobItem = await inputDirectory.ListBlobsSegmentedAsync(null);
@@ -332,5 +407,13 @@ namespace FfmpegArgs
         public string storageAccountName { get; set; }
         public string sasToken { get; set; }
         public string ServiceBusConnectionString { get; set; }
+    }
+    class messageBody
+    {
+        public string season { get; set; }
+        public string seasontype { get; set; }
+        public string week { get; set; }
+        public string gamekey { get; set; }
+        public string ffmpegCmd { get; set; }
     }
 }
