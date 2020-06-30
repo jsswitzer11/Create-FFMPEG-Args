@@ -329,7 +329,7 @@ namespace FfmpegArgs
             CloudBlobContainer inputContainer = serviceClient.GetContainerReference($"{Season}");
 
             //Change this directory to {SeasonType}/{Week}/{GameKey}/raw/
-            CloudBlobDirectory inputDirectory = inputContainer.GetDirectoryReference($"{SeasonType}/{Week}/raw/");
+            CloudBlobDirectory inputDirectory = inputContainer.GetDirectoryReference($"{SeasonType}/{Week}/{GameKey}/raw/");
 
             var blobItem = await inputDirectory.ListBlobsSegmentedAsync(null);
 
