@@ -67,8 +67,7 @@ namespace FfmpegArgs
 
                 XmlDocument doc = new XmlDocument();
                 doc.Load(ms);
-
-                string league;                
+                
                 string gameKey;
                 string playID;
                 string offMp4 = string.Empty;
@@ -84,8 +83,6 @@ namespace FfmpegArgs
                 {
                     if (node.Name == "Game")
                     {
-                        league = node.Attributes.GetNamedItem("League").Value;
-
                         foreach (XmlNode game in node.ChildNodes)
                         {
                             if (game.Name == "Media")
