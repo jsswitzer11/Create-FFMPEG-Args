@@ -25,6 +25,7 @@ namespace FfmpegArgs
         private static string oVidName;
         private static string dVidName;
         private static string kVidName;
+        private static string League;
         private static string Season;
         private static string SeasonType;
         private static string Week;
@@ -134,9 +135,9 @@ namespace FfmpegArgs
                                         {
                                             p.season = Season;
                                             p.seasonType = SeasonType;
-                                            p.league = league;
+                                            p.league = League;
                                             p.week = Week;
-                                            p.gamekey = gameKey;
+                                            p.gamekey = GameKey;
                                             p.playID = playID;
 
                                             if (play.Attributes.GetNamedItem("Source").Value.Contains("Sideline"))
@@ -197,6 +198,7 @@ namespace FfmpegArgs
                         queueClient = new QueueClient(settings.ServiceBusConnectionString, "defense_sideline");
                         string defSidelineMessageBody = $"-i {dVidName} " + pa.Substring(pa.LastIndexOf("-- ") + 3);
 
+                        defSideline.league = League;
                         defSideline.season = Season;
                         defSideline.seasontype = SeasonType;
                         defSideline.week = Week;
@@ -216,6 +218,7 @@ namespace FfmpegArgs
                         queueClient = new QueueClient(settings.ServiceBusConnectionString, "defense_endzone");
                         string defEndzoneMessageBody = $"-i {dVidName} " + pa.Substring(pa.LastIndexOf("-- ") + 3);
 
+                        defEndzone.league = League;
                         defEndzone.season = Season;
                         defEndzone.seasontype = SeasonType;
                         defEndzone.week = Week;
@@ -235,6 +238,7 @@ namespace FfmpegArgs
                         queueClient = new QueueClient(settings.ServiceBusConnectionString, "offense_sideline");
                         string offSidelineMessageBody = $"-i {oVidName} " + pa.Substring(pa.LastIndexOf("-- ") + 3);
 
+                        offSideline.league = League;
                         offSideline.season = Season;
                         offSideline.seasontype = SeasonType;
                         offSideline.week = Week;
@@ -255,6 +259,7 @@ namespace FfmpegArgs
                         queueClient = new QueueClient(settings.ServiceBusConnectionString, "offense_endzone");
                         string offEndzoneMessageBody = $"-i {oVidName} " + pa.Substring(pa.LastIndexOf("-- ") + 3);
 
+                        offEndzone.league = League;
                         offEndzone.season = Season;
                         offEndzone.seasontype = SeasonType;
                         offEndzone.week = Week;
@@ -274,6 +279,7 @@ namespace FfmpegArgs
                         queueClient = new QueueClient(settings.ServiceBusConnectionString, "specialteams");
                         string kickMessageBody = $"-i {kVidName} " + pa.Substring(pa.LastIndexOf("-- ") + 3);
 
+                        specialTeams.league = League;
                         specialTeams.season = Season;
                         specialTeams.seasontype = SeasonType;
                         specialTeams.week = Week;
@@ -315,6 +321,7 @@ namespace FfmpegArgs
             {
                 if (node.Name == "Game")
                 {
+                    League = node.Attributes.GetNamedItem("League").Value.ToString().ToLower();
                     Season = node.Attributes.GetNamedItem("Season").Value.ToString();
                     SeasonType = node.Attributes.GetNamedItem("SeasonType").Value;
                     Week = node.Attributes.GetNamedItem("Week").Value.ToString();
@@ -326,10 +333,9 @@ namespace FfmpegArgs
 
             var serviceClient = storageAccount.CreateCloudBlobClient();
 
-            CloudBlobContainer inputContainer = serviceClient.GetContainerReference($"{Season}");
+            CloudBlobContainer inputContainer = serviceClient.GetContainerReference($"{League}");
 
-            //Change this directory to {SeasonType}/{Week}/{GameKey}/raw/
-            CloudBlobDirectory inputDirectory = inputContainer.GetDirectoryReference($"{SeasonType}/{Week}/{GameKey}/raw/");
+            CloudBlobDirectory inputDirectory = inputContainer.GetDirectoryReference($"{Season}/{SeasonType}/{Week}/{GameKey}/raw/");
 
             var blobItem = await inputDirectory.ListBlobsSegmentedAsync(null);
 
@@ -410,6 +416,7 @@ namespace FfmpegArgs
     }
     class messageBody
     {
+        public string league { get; set; }
         public string season { get; set; }
         public string seasontype { get; set; }
         public string week { get; set; }
