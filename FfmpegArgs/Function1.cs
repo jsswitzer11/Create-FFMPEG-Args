@@ -339,20 +339,23 @@ namespace FfmpegArgs
             foreach (var item in blobItem.Results)
             {
                 var blob = (CloudBlockBlob)item;
-                if (blob.Name.Contains(" O "))
+                if (blob.Name.Contains(".mp4"))
                 {
-                    var oPath = settings.storageAccountName + "/" + inputContainer.Name + "/" + blob.Name + settings.sasToken;
-                    oVidName = HttpUtility.UrlPathEncode(oPath);
-                }
-                else if (blob.Name.Contains(" D "))
-                {
-                    var dPath = settings.storageAccountName + "/" + inputContainer.Name + "/" + blob.Name + settings.sasToken;
-                    dVidName = HttpUtility.UrlPathEncode(dPath);
-                }
-                else if (blob.Name.Contains(" K "))
-                {
-                    var kPath = settings.storageAccountName + "/" + inputContainer.Name + "/" + blob.Name + settings.sasToken;
-                    kVidName = HttpUtility.UrlPathEncode(kPath);
+                    if (blob.Name.Contains(" O "))
+                    {
+                        var oPath = settings.storageAccountName + "/" + inputContainer.Name + "/" + blob.Name + settings.sasToken;
+                        oVidName = HttpUtility.UrlPathEncode(oPath);
+                    }
+                    else if (blob.Name.Contains(" D "))
+                    {
+                        var dPath = settings.storageAccountName + "/" + inputContainer.Name + "/" + blob.Name + settings.sasToken;
+                        dVidName = HttpUtility.UrlPathEncode(dPath);
+                    }
+                    else if (blob.Name.Contains(" K "))
+                    {
+                        var kPath = settings.storageAccountName + "/" + inputContainer.Name + "/" + blob.Name + settings.sasToken;
+                        kVidName = HttpUtility.UrlPathEncode(kPath);
+                    }
                 }
             }
         }
