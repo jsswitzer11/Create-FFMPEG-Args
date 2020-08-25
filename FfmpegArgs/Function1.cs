@@ -31,6 +31,7 @@ namespace FfmpegArgs
         private static string Week;
         private static string GameKey;
         private static string xmlName;
+        private static string GameName;
         static IQueueClient queueClient;
 
         [FunctionName("FFmpegArgParser")]
@@ -41,6 +42,8 @@ namespace FfmpegArgs
             try
             {
                 xmlName = await req.ReadAsStringAsync();
+                GameName = req.Query["GameName"];
+
                 GetSettings(context, log);
                 GetVideoBlobAsync();
                 GetPlayMetadataAsync(log);
@@ -200,6 +203,7 @@ namespace FfmpegArgs
                         defSideline.seasontype = SeasonType;
                         defSideline.week = Week;
                         defSideline.gamekey = GameKey;
+                        defSideline.gamename = GameName;
                         defSideline.ffmpegCmd = defSidelineMessageBody;
                         string defSidelineJSON = JsonConvert.SerializeObject(defSideline);
 
@@ -220,6 +224,7 @@ namespace FfmpegArgs
                         defEndzone.seasontype = SeasonType;
                         defEndzone.week = Week;
                         defEndzone.gamekey = GameKey;
+                        defEndzone.gamename = GameName;
                         defEndzone.ffmpegCmd = defEndzoneMessageBody;
                         string defEndzoneJSON = JsonConvert.SerializeObject(defEndzone);
 
@@ -240,6 +245,7 @@ namespace FfmpegArgs
                         offSideline.seasontype = SeasonType;
                         offSideline.week = Week;
                         offSideline.gamekey = GameKey;
+                        offSideline.gamename = GameName;
                         offSideline.ffmpegCmd = offSidelineMessageBody;
                         string defSidelineJSON = JsonConvert.SerializeObject(offSideline);
 
@@ -261,6 +267,7 @@ namespace FfmpegArgs
                         offEndzone.seasontype = SeasonType;
                         offEndzone.week = Week;
                         offEndzone.gamekey = GameKey;
+                        offEndzone.gamename = GameName;
                         offEndzone.ffmpegCmd = offEndzoneMessageBody;
                         string defSidelineJSON = JsonConvert.SerializeObject(offEndzone);
 
@@ -281,6 +288,7 @@ namespace FfmpegArgs
                         specialTeams.seasontype = SeasonType;
                         specialTeams.week = Week;
                         specialTeams.gamekey = GameKey;
+                        specialTeams.gamename = GameName;
                         specialTeams.ffmpegCmd = kickMessageBody;
                         string defSidelineJSON = JsonConvert.SerializeObject(specialTeams);
 
@@ -421,6 +429,7 @@ namespace FfmpegArgs
         public string seasontype { get; set; }
         public string week { get; set; }
         public string gamekey { get; set; }
+        public string gamename { get; set; }
         public string ffmpegCmd { get; set; }
     }
 }
