@@ -159,8 +159,9 @@ namespace FfmpegArgs
                                             if (!p.outputName.Contains("Scoreboard"))
                                             {
                                                 string ffmpeg_file = Path.Combine(settings.outputPath, p.outputName);
+
                                                 string id = play.Attributes.GetNamedItem("ID").Value;
-                                                string arg = $"-ss {p.startTime.ToString()} -t {p.duration.ToString()} {ffmpeg_file}";
+                                                string arg = $"-b:v 2M -maxrate 3M -ss {p.startTime.ToString()} -t {p.duration.ToString()} {ffmpeg_file}";
                                                 playArgs.Add(id + " -- " + arg);
                                             }
 
